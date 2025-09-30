@@ -1,8 +1,8 @@
 package main
 
 import (
-	"Form/utils"
 	"bufio"
+	"example.com/Form/utils"
 	"fmt"
 	"os"
 	"regexp"
@@ -24,8 +24,9 @@ func main() {
 	flag := true
 	reader := bufio.NewReader(os.Stdin)
 
+	utils.Greet()
 	for flag {
-		fmt.Println("\n1. Register Employee\n2. Print Employees\n0. Exit\nEnter option: ")
+		fmt.Println("\n1. Register Employee\n2. Print Employees\n3. Store to File\n0. Exit\nEnter option: ")
 
 		var option int
 		_, err := fmt.Scan(&option)
@@ -128,7 +129,12 @@ func main() {
 				fmt.Printf("EmpNo: %d, Name: %s, Email: %s, Dept: %s, DOB: %s\n",
 					e.GetEmpNo(), e.GetName(), e.GetEmail(), e.GetDepartment(), e.GetDob())
 			}
-
+		case 3:
+			var employeesClone []utils.Employee
+			for _, e := range employees {
+				employeesClone = append(employeesClone, *e)
+			}
+			os.WriteFile("employeeDetails.txt", []byte(fmt.Sprintf("%+v", employeesClone)), 0644)
 		case 0:
 			flag = false
 			fmt.Println("Exiting program...")
