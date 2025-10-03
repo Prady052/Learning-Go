@@ -2,12 +2,13 @@ package main
 
 import (
 	"bufio"
-	"example.com/Form/utils"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"example.com/Form/utils"
 )
 
 var departments = map[string]int{
@@ -20,13 +21,13 @@ var departments = map[string]int{
 }
 
 func main() {
-	var employees []*utils.Employee
+	var employees []utils.Employee
 	flag := true
 	reader := bufio.NewReader(os.Stdin)
 
 	utils.Greet()
 	for flag {
-		fmt.Println("\n1. Register Employee\n2. Print Employees\n3. Store to File\n0. Exit\nEnter option: ")
+		fmt.Println("\n1. Register Employee\n2. Print Employees\n3. Store to File\n4. update \n5. Delete\n 0. Exit\nEnter option: ")
 
 		var option int
 		_, err := fmt.Scan(&option)
@@ -120,7 +121,7 @@ func main() {
 				continue
 			}
 
-			employees = append(employees, emp)
+			employees = append(employees, *emp)
 			fmt.Println("Employee registered successfully!")
 
 		case 2:
@@ -130,11 +131,110 @@ func main() {
 					e.GetEmpNo(), e.GetName(), e.GetEmail(), e.GetDepartment(), e.GetDob())
 			}
 		case 3:
-			var employeesClone []utils.Employee
-			for _, e := range employees {
-				employeesClone = append(employeesClone, *e)
+			os.WriteFile("employeeDetails.txt", []byte(fmt.Sprintf("%+v", employees)), 0644)
+
+		case 4:
+			fmt.Println("Enter the employee number to update: ")
+			var empNo int
+			_, err := fmt.Scan(&empNo)
+			fmt.Scanln()
+			if err != nil {
+				fmt.Println("Invalid option, try again")
+				continue
 			}
-			os.WriteFile("employeeDetails.txt", []byte(fmt.Sprintf("%+v", employeesClone)), 0644)
+			var data *utils.Employee
+			for index, e := range employees {
+				if e.GetEmpNo() == empNo {
+					data = &employees[index]
+				}
+			}
+			fmt.Println("Enter the field to update else keep blank to skip: ")
+			var cn string
+			fmt.Println("Enter name: ")
+			cn, _ = reader.ReadString('\n')
+			cn = strings.TrimSpace(cn)
+			if cn != "" {
+				data.SetName(cn)
+			}
+			var email string
+			fmt.Println("Enter email: ")
+			email, _ = reader.ReadString('\n')
+			email = strings.TrimSpace(email)
+
+			// email validation
+			//if email == "" {
+			//	return nil, errors.New("email cannot be empty")
+			//}
+
+			emailRegex := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+			if email != "" {
+				match, _ := regexp.MatchString(emailRegex, email)
+				if !match {
+					fmt.Println("invalid email format")
+					continue
+				}
+				data.SetEmail(email)
+			}
+			var dept string
+			fmt.Println("Enter department: ")
+			dept, _ = reader.ReadString('\n')
+			dept = strings.TrimSpace(dept)
+
+			// department validation
+
+			if dept != "" {
+				if departments[strings.ToUpper(dept)] == 0 {
+					fmt.Println("invalid department")
+					continue
+				}
+				data.SetDepartment(dept)
+			}
+			var dob string
+			fmt.Println("Enter dob: ")
+			dob, _ = reader.ReadString('\n')
+			dob = strings.TrimSpace(dob)
+
+			//Dob validation
+
+			if dob != "" {
+				_, err = time.Parse("2006-01-02", dob)
+
+				if err != nil {
+					fmt.Println("invalid date format")
+					continue
+				}
+				data.SetDob(dob)
+			}
+			var password string
+			fmt.Println("Enter password: ")
+			fmt.Scanln(&password)
+			if password != "" {
+				data.SetPassword(password)
+			}
+
+			fmt.Println("Employee updated successfully!")
+
+		case 5:
+			fmt.Println("Enter the employee number to delete: ")
+			var empNo int
+			_, err := fmt.Scan(&empNo)
+			if err != nil {
+				fmt.Println("Invalid option, try again")
+				continue
+			}
+
+			var pos int
+			for index, e := range employees {
+				if e.GetEmpNo() == empNo {
+					pos = index
+					break
+				}
+			}
+			copy(employees[pos:], employees[pos+1:]) // copy all elements from pos+1 to the end of the slice
+			// to pos to len(employees)-1
+			// and then delete the last element
+			employees = employees[:len(employees)-1]
+			fmt.Println("Employee deleted successfully!")
 		case 0:
 			flag = false
 			fmt.Println("Exiting program...")
